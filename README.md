@@ -119,11 +119,11 @@ pip install -r requirements.txt
    - 也可以直接修改config.py中的默认配置
 
 
-English version:
-Paper Splitting Tool (Modular Version)
+# English version:
+# Paper Splitting Tool (Modular Version)
 A modular exam paper processing tool based on the pipeline pattern that can automatically split, recognize, classify, and organize questions from PDF exam papers into separate PDF files.
 
-Project Structure
+## Project Structure
 
 ```
 paper_splitter/
@@ -138,7 +138,7 @@ paper_splitter/
 ├── requirements.txt   # Dependency list
 └── README.md          # Project documentation
 ```
-Module Descriptions
+## Module Descriptions
 1. **Configuration Module (config.py)**
    - Stores all constants and configuration items
    - Includes path configurations, API settings, default classifications, etc.
