@@ -117,3 +117,133 @@ pip install -r requirements.txt
 3. **自定义配置**：
    - 可以在运行时修改config对象的属性
    - 也可以直接修改config.py中的默认配置
+
+
+English version:
+Paper Splitting Tool (Modular Version)
+A modular exam paper processing tool based on the pipeline pattern that can automatically split, recognize, classify, and organize questions from PDF exam papers into separate PDF files.
+
+Project Structure
+
+```
+paper_splitter/
+├── __init__.py        # Package initialization file
+├── config.py          # Configuration module - stores constants and settings
+├── utils.py           # Utilities module - common utility functions
+├── data_processor.py  # Data processing module - PDF conversion and question splitting
+├── classifier.py      # Classifier module - question classification functionality
+├── result_processor.py # Result processing module - organizes and saves results
+├── pipeline.py        # Pipeline module - core process control
+├── main.py            # Main entry file
+├── requirements.txt   # Dependency list
+└── README.md          # Project documentation
+```
+Module Descriptions
+1. **Configuration Module (config.py)**
+   - Stores all constants and configuration items
+   - Includes path configurations, API settings, default classifications, etc.
+
+2. **Utilities Module (utils.py)**
+   - File handling utilities
+   - Image preprocessing functions
+   - PDF page layout calculations
+
+3. **Data Processing Module (data_processor.py)**
+   - PDF to image conversion functionality
+
+   - Question detection and splitting
+
+   - OCR text extraction
+
+4. **Classifier Module (classifier.py)**
+
+   - DeepSeek API-based classifier
+   - Keyword-based fallback classifier
+
+   - Classifier interface design
+
+5. **Result Processing Module (result_processor.py)**
+
+   - Result organization functionality
+
+   - PDF generator
+
+   - Image saving functionality
+
+6. **Pipeline Module (pipeline.py)**
+
+   - PipelineStage base class
+
+   - Implementation of each processing stage
+
+   - Complete process flow control
+
+## Usage
+
+### Command Line Usage
+
+```bash
+python -m paper_splitter.main path/to/your/paper.pdf --output_dir output_folder --api_key your_api_key
+```
+
+### Parameter Description
+
+- `pdf_path`: PDF file path (required)
+- `--output_dir`:Output directory (default: output_questions)
+- `--api_key`: DeepSeek API key (optional, defaults to the key in configuration)
+- `--categories`: Custom classification categories, comma-separated (e.g., algebra,geometry,probability_statistics)
+
+### Usage as a Library
+
+```python
+from paper_splitter.config import *
+from paper_splitter.pipeline import PaperProcessingPipeline
+
+# Create configuration instance
+class Config:
+    pass
+config = Config()
+# Load configuration items... (refer to main.py)
+
+# Create processing pipeline
+pipeline = PaperProcessingPipeline(
+    config=config,
+    pdf_path="path/to/paper.pdf",
+    output_dir="output_folder",
+    api_key="your_api_key",
+    custom_categories=["代数", "几何", "概率统计"]
+)
+
+# Execute processing
+result = pipeline.execute()
+```
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## Notes
+
+1. Ensure Tesseract OCR is installed and set the correct path in config.py
+2. Ensure Poppler is installed and set the correct path in config.py
+3. DeepSeek API key needs to be valid to use API classification functionality
+4. Currently supports mixed Chinese and English recognition
+
+## Extension Methods
+
+1. **Adding New Processing Stages**：
+   - Inherit from the PipelineStage base class
+   - Implement the execute method
+   - Add to the stages list in PaperProcessingPipeline
+   
+2. **Using Custom Classifiers**：
+    - Inherit from the QuestionClassifier base class
+    - Implement the classify method
+    - Replace the default classifier in ClassificationStage
+
+3. **Custom Configuration**：
+    - You can modify properties of the config object at runtime
+
+    - You can also directly modify the default configuration in config.py

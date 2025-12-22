@@ -410,7 +410,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # 从命令行参数或环境变量获取API密钥
-    DEEPSEEK_API_KEY = args.api_key or "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"  # 替换为你的实际API密钥
+    DEEPSEEK_API_KEY = args.api_key  # 替换为你的实际API密钥
 
     # 使用绝对路径确保中文路径正确编码
     pdf_file_path = os.path.abspath(args.pdf_path)
