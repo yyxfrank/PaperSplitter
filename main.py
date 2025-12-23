@@ -26,6 +26,9 @@ def build_config():
     config.HEADER_TEXT_COLOR = HEADER_TEXT_COLOR
     config.HEADER_FONT_SIZE = HEADER_FONT_SIZE
     config.API_RATE_LIMIT_DELAY = API_RATE_LIMIT_DELAY
+    config.DETECTION_MODE_OCR = DETECTION_MODE_OCR
+    config.DETECTION_MODE_PYMUPDF = DETECTION_MODE_PYMUPDF
+    config.DEFAULT_DETECTION_MODE = DEFAULT_DETECTION_MODE
     config.PDF_PAGE_SIZE = PDF_PAGE_SIZE
     config.PDF_MARGIN_LEFT = PDF_MARGIN_LEFT
     config.PDF_MARGIN_TOP = PDF_MARGIN_TOP
@@ -42,6 +45,8 @@ def main():
     parser.add_argument('pdf_path', nargs='?', help='PDF文件路径')
     parser.add_argument('--output_dir', default='output_questions', help='输出目录')
     parser.add_argument('--categories', help='自定义分类类别，用逗号分隔（如：代数,几何,概率统计）')
+    parser.add_argument('--detection_mode', choices=['pymupdf', 'ocr'], default='pymupdf',
+                      help='识别模式：pymupdf（基于PDF结构）或ocr（基于图像识别）')
     args = parser.parse_args()
 
     # 如果未提供 pdf_path，则交互式输入
@@ -78,6 +83,18 @@ def main():
             print(f"✅ 使用交互输入的分类类别: {custom_categories}")
         else:
             print("📘 使用默认分类类别。")
+    
+    # 处理识别模式
+    detection_mode = args.detection_mode
+    if not args.detection_mode:
+        user_input = input("请选择识别模式（pymupdf/ocr，留空使用默认）: ").strip().lower()
+        if user_input in ['pymupdf', 'ocr']:
+            detection_mode = user_input
+            print(f"✅ 使用交互输入的识别模式: {detection_mode}")
+        else:
+            print("📘 使用默认识别模式。")
+    else:
+        print(f"✅ 使用命令行指定的识别模式: {detection_mode}")
 
     # 构建配置
     config = build_config()
@@ -88,7 +105,8 @@ def main():
         config=config,
         pdf_path=pdf_path,
         output_dir=output_dir,
-        custom_categories=custom_categories
+        custom_categories=custom_categories,
+        detection_mode=detection_mode
     )
 
     try:

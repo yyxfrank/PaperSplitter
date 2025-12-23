@@ -1,6 +1,11 @@
 # 配置文件 - 存储系统配置和常量
 
 API_RATE_LIMIT_DELAY=30
+# 识别模式配置
+DETECTION_MODE_OCR = 'ocr'          # 使用OCR进行题目检测
+DETECTION_MODE_PYMUPDF = 'pymupdf'  # 使用PyMuPDF进行题目检测
+DEFAULT_DETECTION_MODE = DETECTION_MODE_PYMUPDF  # 默认使用PyMuPDF
+
 # Tesseract OCR配置
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 

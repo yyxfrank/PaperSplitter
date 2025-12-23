@@ -11,7 +11,7 @@ from utils import create_directory, validate_file_path, get_absolute_path
 import fitz  # PyMuPDF
 from classifier import OpenAIClassifier
 from result_processor import ResultOrganizer, ResultSaver
-from data_processor import TextExtractor, PyMuPDFQuestionDetector
+from data_processor import TextExtractor, PyMuPDFQuestionDetector, QuestionDetector, OCREngine
 
 
 class PipelineStage:
@@ -53,41 +53,91 @@ class PDFToImageStage(PipelineStage):
 
 
 class QuestionDetectionStage(PipelineStage):
-    """题目检测阶段 - 使用PyMuPDF实现"""
+    """题目检测阶段 - 根据模式选择PyMuPDF或OCR实现"""
 
-    def __init__(self, config):
+    def __init__(self, config, detection_mode):
         super().__init__("题目检测与分割")
         self.config = config
-        # 初始化题目检测器
-        self.detector = PyMuPDFQuestionDetector(config)
+        self.detection_mode = detection_mode
+        
+        # 根据检测模式选择不同的检测器
+        if detection_mode == config.DETECTION_MODE_PYMUPDF:
+            self.detector = PyMuPDFQuestionDetector(config)
+        else:  # OCR模式
+            self.detector = QuestionDetector(config)
 
     def execute(self, data):
-        """调用data_processor中的PyMuPDFQuestionDetector执行题目检测和分割"""
+        """根据检测模式执行题目检测和分割"""
         pdf_path = data['pdf_path']
         images = data['images']
         
-        print("正在使用PyMuPDF检测题目...")
+        if self.detection_mode == self.config.DETECTION_MODE_PYMUPDF:
+            print("正在使用PyMuPDF检测题目...")
+            # 调用PyMuPDFQuestionDetector的检测方法
+            result = self.detector.detect_questions(pdf_path, images)
+        else:
+            print("正在使用OCR检测题目...")
+            # 调用传统QuestionDetector的检测方法
+            all_questions = []
+            page_count = 0
+            
+            # 遍历所有图像，检测题目
+            for page_num, image in enumerate(images):
+                page_img = np.array(image)
+                questions = self.detector.detect_questions(page_img)
+                
+                if questions:
+                    page_count += 1
+                    # 为检测到的题目创建题目数据
+                    for i, (q_img, bbox) in enumerate(questions):
+                        q_id = f"p{page_num + 1}_q{i + 1}"
+                        question_data = {
+                            "id": q_id,
+                            "image": q_img,
+                            "page": page_num + 1,
+                            "position": bbox[1],
+                            "bbox": bbox,
+                            "token": str(i + 1),  # 使用序号作为题号
+                            "text": ""  # 先留空，后面OCR阶段会填充
+                        }
+                        all_questions.append(question_data)
+            
+            result = {'questions': all_questions}
         
-        # 调用data_processor中的检测方法
-        result = self.detector.detect_questions(pdf_path, images)
         return result
 
 
 class TextExtractionStage(PipelineStage):
-    """文本提取阶段 - 调用data_processor中的TextExtractor实现"""
+    """文本提取阶段 - 根据模式选择PyMuPDF或OCR实现"""
     
-    def __init__(self, config):
+    def __init__(self, config, detection_mode):
         super().__init__("文本提取")
         self.config = config
+        self.detection_mode = detection_mode
         self.text_extractor = TextExtractor(config)
+        self.ocr_engine = OCREngine(config)
     
     def execute(self, data):
-        """调用data_processor中的TextExtractor执行文本提取"""
+        """根据检测模式执行文本提取"""
         pdf_path = data['pdf_path']
         questions = data['questions']
         
-        # 调用TextExtractor进行文本提取
-        questions_with_text = self.text_extractor.extract_text_from_pdf(pdf_path, questions)
+        if self.detection_mode == self.config.DETECTION_MODE_PYMUPDF:
+            print("正在使用PyMuPDF提取题目文本...")
+            # 调用PyMuPDF的文本提取器
+            questions_with_text = self.text_extractor.extract_text_from_pdf(pdf_path, questions)
+        else:
+            print("正在使用OCR提取题目文本...")
+            # 调用OCR引擎提取文本
+            questions_with_text = []
+            for q in questions:
+                question_copy = q.copy()
+                image = q['image']
+                
+                # 使用OCR引擎提取文本
+                text = self.ocr_engine.extract_text(Image.fromarray(image))
+                question_copy['text'] = text
+                questions_with_text.append(question_copy)
         
         return {'questions': questions_with_text}
 
@@ -177,7 +227,7 @@ class OrganizationStage(PipelineStage):
 class PaperProcessingPipeline:
     """试卷处理管道 - 组织和执行整个处理流程"""
     
-    def __init__(self, config, pdf_path, output_dir, custom_categories=None):
+    def __init__(self, config, pdf_path, output_dir, custom_categories=None, detection_mode=None):
         # 验证和准备路径
         self.pdf_path = get_absolute_path(pdf_path)
         validate_file_path(self.pdf_path)
@@ -186,12 +236,13 @@ class PaperProcessingPipeline:
         
         self.config = config
         self.custom_categories = custom_categories
+        self.detection_mode = detection_mode or config.DEFAULT_DETECTION_MODE
         
         # 初始化各个阶段
         self.stages = [
             PDFToImageStage(config),
-            QuestionDetectionStage(config),
-            TextExtractionStage(config),
+            QuestionDetectionStage(config, self.detection_mode),
+            TextExtractionStage(config, self.detection_mode),
             ClassificationStage(config, custom_categories),
             ResultSavingStage(config, output_dir),
             OrganizationStage(config, output_dir)
