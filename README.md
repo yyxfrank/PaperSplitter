@@ -22,7 +22,7 @@ paper_splitter/
 
 1. **配置模块 (config.py)**
    - 存储所有常量和配置项
-   - 包括路径配置、API配置、默认分类等
+   - 包括路径配置、默认分类等
 
 2. **工具模块 (utils.py)**
    - 文件处理工具
@@ -31,11 +31,12 @@ paper_splitter/
 
 3. **数据处理模块 (data_processor.py)**
    - PDF转图像功能
-   - 题目检测和分割
+   - 基于PyMuPDF的题目检测和分割
    - OCR文本提取
+   - PDF文本直接提取
 
 4. **分类器模块 (classifier.py)**
-   - 基于DeepSeek API的分类器
+   - 基于OpenAI API的分类器
    - 基于关键词的后备分类器
    - 分类器接口设计
 
@@ -46,7 +47,8 @@ paper_splitter/
 
 6. **管道模块 (pipeline.py)**
    - PipelineStage基类
-   - 各个处理阶段的实现
+   - 各个处理阶段的流程控制
+   - 调用data_processor模块中的具体实现
    - 完整处理流程控制
 
 ## 使用方法
@@ -54,14 +56,13 @@ paper_splitter/
 ### 命令行使用
 
 ```bash
-python -m paper_splitter.main path/to/your/paper.pdf --output_dir output_folder --api_key your_api_key
+python main.py path/to/your/paper.pdf --output_dir output_folder
 ```
 
 ### 参数说明
 
 - `pdf_path`: PDF文件路径（必需）
 - `--output_dir`: 输出目录（默认：output_questions）
-- `--api_key`: DeepSeek API密钥（可选，默认使用配置中的密钥）
 - `--categories`: 自定义分类类别，用逗号分隔（例如：代数,几何,概率统计）
 
 ### 作为库使用
@@ -81,7 +82,6 @@ pipeline = PaperProcessingPipeline(
     config=config,
     pdf_path="path/to/paper.pdf",
     output_dir="output_folder",
-    api_key="your_api_key",
     custom_categories=["代数", "几何", "概率统计"]
 )
 
@@ -99,8 +99,7 @@ pip install -r requirements.txt
 
 1. 确保安装了Tesseract OCR，并在config.py中设置正确的路径
 2. 确保安装了Poppler，并在config.py中设置正确的路径
-3. DeepSeek API密钥需要有效才能使用API分类功能
-4. 目前支持中文和英文的混合识别
+3. 目前支持中文和英文的混合识别
 
 ## 扩展方法
 
@@ -141,7 +140,7 @@ paper_splitter/
 ## Module Descriptions
 1. **Configuration Module (config.py)**
    - Stores all constants and configuration items
-   - Includes path configurations, API settings, default classifications, etc.
+   - Includes path configurations, default classifications, etc.
 
 2. **Utilities Module (utils.py)**
    - File handling utilities
@@ -150,14 +149,13 @@ paper_splitter/
 
 3. **Data Processing Module (data_processor.py)**
    - PDF to image conversion functionality
-
-   - Question detection and splitting
-
+   - PyMuPDF-based question detection and splitting
    - OCR text extraction
+   - Direct PDF text extraction
 
 4. **Classifier Module (classifier.py)**
 
-   - DeepSeek API-based classifier
+   - OpenAI API-based classifier
    - Keyword-based fallback classifier
 
    - Classifier interface design
@@ -171,11 +169,9 @@ paper_splitter/
    - Image saving functionality
 
 6. **Pipeline Module (pipeline.py)**
-
    - PipelineStage base class
-
-   - Implementation of each processing stage
-
+   - Process control for each processing stage
+   - Calls concrete implementations in data_processor module
    - Complete process flow control
 
 ## Usage
@@ -183,14 +179,13 @@ paper_splitter/
 ### Command Line Usage
 
 ```bash
-python -m paper_splitter.main path/to/your/paper.pdf --output_dir output_folder --api_key your_api_key
+python main.py path/to/your/paper.pdf --output_dir output_folder
 ```
 
 ### Parameter Description
 
 - `pdf_path`: PDF file path (required)
 - `--output_dir`:Output directory (default: output_questions)
-- `--api_key`: DeepSeek API key (optional, defaults to the key in configuration)
 - `--categories`: Custom classification categories, comma-separated (e.g., algebra,geometry,probability_statistics)
 
 ### Usage as a Library
@@ -210,7 +205,6 @@ pipeline = PaperProcessingPipeline(
     config=config,
     pdf_path="path/to/paper.pdf",
     output_dir="output_folder",
-    api_key="your_api_key",
     custom_categories=["代数", "几何", "概率统计"]
 )
 
@@ -228,8 +222,7 @@ pip install -r requirements.txt
 
 1. Ensure Tesseract OCR is installed and set the correct path in config.py
 2. Ensure Poppler is installed and set the correct path in config.py
-3. DeepSeek API key needs to be valid to use API classification functionality
-4. Currently supports mixed Chinese and English recognition
+3. Currently supports mixed Chinese and English recognition
 
 ## Extension Methods
 

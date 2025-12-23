@@ -1,5 +1,6 @@
 # 配置文件 - 存储系统配置和常量
 
+API_RATE_LIMIT_DELAY=30
 # Tesseract OCR配置
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
